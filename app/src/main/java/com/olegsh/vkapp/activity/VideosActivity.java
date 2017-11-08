@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -61,7 +62,9 @@ public class VideosActivity extends AppCompatActivity implements VideosAdapter.O
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                if (newState == RecyclerView.SCROLL_STATE_IDLE && !recyclerView.canScrollVertically(1)) {
+                if (newState == RecyclerView.SCROLL_STATE_IDLE
+                        && !recyclerView.canScrollVertically(1)
+                        && !TextUtils.isEmpty(next_from)) {
                     swipeRefreshLayout.setRefreshing(true);
                     updateVideoList(false);
                 }
