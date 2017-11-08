@@ -44,7 +44,6 @@ public class VideosActivity extends AppCompatActivity implements VideosAdapter.O
     private RecyclerView recyclerView;
     private SwipeRefreshLayout swipeRefreshLayout;
     private VideosAdapter adapter;
-    public static List<VKApiVideo> videoList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,37 +55,51 @@ public class VideosActivity extends AppCompatActivity implements VideosAdapter.O
     private void initView() {
         recyclerView = findViewById(R.id.itemsRecyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new VideosAdapter(null, this);
+        recyclerView.setAdapter(adapter);
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if (newState == RecyclerView.SCROLL_STATE_IDLE && !recyclerView.canScrollVertically(1)) {
+                    swipeRefreshLayout.setRefreshing(true);
+                    updateVideoList(false);
+                }
+                if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
+                    ImageLoader.getInstance().pause();
+                }
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    ImageLoader.getInstance().resume();
+                }
+            }
+        });
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
         swipeRefreshLayout.setRefreshing(true);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                updateVideoList();
+                updateVideoList(true);
             }
         });
         Toolbar toolbar = (Toolbar) findViewById(R.id.main_toolbar);
         setSupportActionBar(toolbar);
-
-        if(videoList == null) {
-            Log.d(TAG, "Update video list");
-            updateVideoList();
-        } else {
-            onVideoListLoadComplete();
-        }
+        updateVideoList(true);
     }
 
+    private String next_from;
     //Update video list using "newsfeed.get" request
-    private void updateVideoList() {
-        VKParameters parameters = VKParameters.from(VKApiConst.FILTERS, "video");
+    private void updateVideoList(final boolean clean) {
+        if(clean) next_from = null;
+        VKParameters parameters = VKParameters.from(VKApiConst.FILTERS, "video", VKApiConst.COUNT, "10", "start_from", next_from);
         final VKRequest request = new VKRequest("newsfeed.get", parameters);
         request.setRequestListener(new VKRequest.VKRequestListener() {
             @Override
             public void onComplete(VKResponse response) {
                 super.onComplete(response);
-                //Log.d(TAG, "Response: " + response.json.toString());
+                Log.d(TAG, response.json.toString());
                 try {
-                    videoList = parseVideoListResponse(response.json);
-                    onVideoListLoadComplete();
+                    List<VKApiVideo> newList = parseVideoListResponse(response.json);
+                    onVideoListLoadComplete(newList, clean);
                 } catch (JSONException e) {
                     e.printStackTrace();
                     VideosActivity.this.onError(e.getMessage());
@@ -96,6 +109,7 @@ public class VideosActivity extends AppCompatActivity implements VideosAdapter.O
             //Sorry for this. This is my super VK response JSON parser :)
             //TODO: I hope better way exist (not manual parsing)
             private List<VKApiVideo> parseVideoListResponse(JSONObject response) throws JSONException {
+                next_from = response.getJSONObject("response").getString("next_from");
                 List<VKApiVideo> listVideo = new ArrayList<>();
                 JSONArray array = response.getJSONObject("response").getJSONArray("items");
                 for(int i = 0; i < array.length(); i++) {
@@ -120,9 +134,9 @@ public class VideosActivity extends AppCompatActivity implements VideosAdapter.O
     }
 
     //If video list is updated, than refresh adapter
-    private void onVideoListLoadComplete() {
-        adapter = new VideosAdapter(videoList, this);
-        recyclerView.swapAdapter(adapter, false);
+    private void onVideoListLoadComplete(List<VKApiVideo> list, boolean clean) {
+        adapter.updateData(list, clean);
+        //recyclerView.swapAdapter(adapter, false);
         swipeRefreshLayout.setRefreshing(false);
     }
 
@@ -177,7 +191,6 @@ public class VideosActivity extends AppCompatActivity implements VideosAdapter.O
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 VKSdk.logout();
-                                videoList = null;
                                 ImageLoader.getInstance().clearDiskCache();
                                 Intent intent = new Intent(VideosActivity.this, LoginActivity.class);
                                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

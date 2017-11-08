@@ -2,6 +2,7 @@ package com.olegsh.vkapp.adapter;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +23,8 @@ import java.util.List;
 
 public class VideosAdapter extends RecyclerView.Adapter<VideosAdapter.VideoHolder> {
 
+    private final String TAG = "VideosAdapter";
+
     private List<VKApiVideo> videoList;
     private LayoutInflater inflater;
     private OnVideoClickListener listener;
@@ -34,9 +37,20 @@ public class VideosAdapter extends RecyclerView.Adapter<VideosAdapter.VideoHolde
         } else {
             this.videoList = new ArrayList<>(videoList);
         }
+        Log.d(TAG, "Adapter list size initial: " + this.videoList.size());
         this.inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         listener = (OnVideoClickListener) context;
         this.context = context;
+    }
+
+    public void updateData(List<VKApiVideo> videoList, boolean clean) {
+        if(clean) {
+            this.videoList = new ArrayList<>(videoList);
+        } else {
+            this.videoList.addAll(videoList);
+        }
+        Log.d(TAG, "Adapter list size after update: " + this.videoList.size());
+        notifyDataSetChanged();
     }
 
     @Override
