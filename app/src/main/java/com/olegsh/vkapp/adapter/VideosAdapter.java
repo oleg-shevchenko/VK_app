@@ -22,18 +22,17 @@ import java.util.List;
 
 public class VideosAdapter extends RecyclerView.Adapter<VideosAdapter.VideoHolder> {
 
-    private final static String LOG_TAG = "DriverAdapter";
     private List<VKApiVideo> videoList;
     private LayoutInflater inflater;
     private OnVideoClickListener listener;
     private Context context;
     private ImageLoader imageLoader = ImageLoader.getInstance();
 
-    public VideosAdapter(List<VKApiVideo> driverList, Context context) {
-        if(driverList == null || driverList.size() == 0) {
+    public VideosAdapter(List<VKApiVideo> videoList, Context context) {
+        if(videoList == null || videoList.size() == 0) {
             this.videoList = new ArrayList<>(0);
         } else {
-            this.videoList = new ArrayList<>(driverList);
+            this.videoList = new ArrayList<>(videoList);
         }
         this.inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         listener = (OnVideoClickListener) context;
