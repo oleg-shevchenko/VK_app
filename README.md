@@ -1,3 +1,4 @@
 # VK_app
-Test VK Video Application last version:
+Тестовое задание для AdvertHUB
+Пожалуйста, скачайте последнюю исправленую версию APK здесь
 https://drive.google.com/open?id=1Htrza2zPAT6w_OOxs1CZXaqOavD2Q9FM
